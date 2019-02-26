@@ -40,11 +40,13 @@ public class MenuService {
 
 	@PostConstruct
     public void init() {
+		// Invoke by the container on newly constructed service instances after all dependency injection has completed and before transport starts.
         System.out.println("MenuService is calling PostConstruct method");
     }
 
     @PreDestroy
     public void close() {
+    	// Invoke by the container during server shutdown before the container removes the service instance.
     	System.out.println("MenuService is calling PreDestroy method");
     }
 
