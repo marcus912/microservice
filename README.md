@@ -63,6 +63,8 @@ public class MySpringApplication {
 </code>
 </pre>
 
+如果遇到一直無法排除的錯誤，請試著將 **Maven** 中的 `.m2\repository\org\wso` 刪除，重新 build 一次 project
+
 ## **修改 Port**
 **MicroservicesRunner** 建構式可傳入 port，如果欲將 port 修改為7070可參考下列
 
@@ -109,7 +111,7 @@ public class TransportConfiguration {
 <pre>
 <code>
 &lt;project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"&gt;
-    專案繼承自 msf4j，不需要在 pom.xml 維護太多 dependancy
+    #專案繼承自 msf4j，不需要在 pom.xml 維護太多 dependancy
     &lt;parent&gt;
         &lt;groupId&gt;org.wso2.msf4j&lt;/groupId&gt;
         &lt;artifactId&gt;msf4j-service&lt;/artifactId&gt;
@@ -118,7 +120,7 @@ public class TransportConfiguration {
     &lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;
     &lt;artifactId&gt;wso2_msf4j&lt;/artifactId&gt;
     &lt;dependencies&gt;
-        Spring libary
+        #Spring libary
         &lt;dependency&gt;
             &lt;groupId&gt;org.wso2.msf4j&lt;/groupId&gt;
             &lt;artifactId&gt;msf4j-spring&lt;/artifactId&gt;
@@ -142,7 +144,7 @@ public class TransportConfiguration {
 		&lt;/dependency&gt;
     &lt;/dependencies&gt;
     &lt;properties&gt;
-        入口程式 (執行 jar 時由哪個 application 載入 service)
+        #入口程式 (執行 jar 時由哪個 application 載入 service)
         &lt;microservice.mainClass&gt;com.evn.msf4j.spring.MySpringApplication&lt;/microservice.mainClass&gt;
     &lt;/properties&gt;
 &lt;/project&gt;
