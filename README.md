@@ -149,3 +149,202 @@ public class TransportConfiguration {
 </code>
 </pre>
 
+## **`com.evn.msf4j.original.MyApplication`**
+
+WSF4J 透過 **MicroservicesRunner.deploy()** 來啟動 service， deploy() 傳入的參數為將提供的 service class 實例(instance) 陣列
+
+`new MicroservicesRunner().deploy( new MyService(), new MenuService() ).start();`
+
+<pre>
+<code>
+
+@Path("/")
+public class MyService {
+	
+	@GET
+	public String index() {
+		return "default content";
+	}
+	
+	@GET
+	@Path("/hello/{name}")
+	public String hello(@PathParam("name") String name) {
+		return "Hello " + name;
+	}
+}
+
+
+@Path("/menu")
+public class MenuService {
+
+	OrigianlMealDao mealDao = new OrigianlMealDao();
+
+	@Path("/")
+	@GET
+	@Produces({"application/json"})
+	public Response index() {
+		return Response.ok().entity(mealDao.findAll()).build();
+	}
+
+	@Path("/findMeal/{id}")
+	@GET
+	@Produces({"application/json"})
+	public Response findMeal(@PathParam("id") int id) {
+		return Response.ok().entity(mealDao.find(id)).build();
+	}
+	
+	@Path("/{id}")
+	@GET
+	@Produces({"application/json"})
+	public String meal(@PathParam("id") int id) {
+		Gson gson = new Gson();
+		return gson.toJson(mealDao.find(id));
+	}
+
+	@PostConstruct
+    public void init() {
+		// Invoke by the container on newly constructed service instances after all dependency injection has completed and before transport starts.
+        System.out.println("MenuService is calling PostConstruct method");
+    }
+
+    @PreDestroy
+    public void close() {
+    	// Invoke by the container during server shutdown before the container removes the service instance.
+    	System.out.println("MenuService is calling PreDestroy method");
+    }
+
+}
+</code>
+</pre>
+
+Service class 搭配 JAXRS annotations 來串接 **REST** (Representational State Transfer)
+
+上述例子，當服務啟動時，主機下根目錄會對應到 **MyService**，因這個 class 利用 @Path 註冊了 url 根目錄(/)
+
+所以當你在瀏覽器輸入`http://localhost:8080/` 網址時，瀏覽器所發出的請求會導到 **MyService** 的 **index()** method
+
+Service method 所回傳的資料型態如果定義為 **String** ，所 return 的字串會直接傳回到瀏覽器
+
+如果回傳的資料型態定義為 **Response**，則我們可以透過 **Response** 物件來封裝回傳資料
+
+<pre>
+<code>
+return Response.ok().entity(mealDao.find(id)).build()
+</code>
+</pre>
+
+這段程式碼說明，Response Code 為 200，並將 `com.evn.msf4j.model.Meal` bean 透過 **enitity()** 轉成 json 格式回傳
+
+<pre>
+<code>
+return Response.ok().entity(mealDao.findAll()).build()
+</code>
+</pre>
+
+**enitity()** 也能將 List\<Meal\> 轉為 jsonArray
+
+**@Path** 定義在 class 上表示這個 service 在服務器上所註冊的目錄，定義在 method 上表示在這 service 上所對應的子目錄
+
+`http://localhost:9090/menu/findMeal/0`
+
+上述 url 會導向 **MenuService** 的 **findMeal(int id)**
+
+**@PathParam** 變數對應到 **@Path** 中所定義的參數，如 `@PathParam("id")` 取得 `@Path("/findMeal/{id}")` 的 id 值
+
+
+**@GET** 定義此 method 服務 Http GET 請求(Request)，可用其他 Annotation 分別對應 Http PUT、POST、DELETE 等
+
+**@Produces** 可產生的Mime Type，對應到 Http Request Header 的 Accept
+
+**@PostConstruct** 當服務器啟動， service 被掛載上去的時候，會觸發這個 annotation 綁定的 method
+
+**@PreDestroy** 當服務器關閉， service 被移除之前會觸發這個 annotation 綁定的 method
+
+
+
+## **`com.evn.msf4j.spring.MySpringApplication`**
+
+這小節將敘述如何透過 Spring 開發 microservice
+
+**MSF4JSpringApplication** 會自動載入目錄/子目錄下所註冊的 Spring Component，只須在 Service Class 前宣告 ""@Component"" 即可
+
+`MSF4JSpringApplication.run(MySpringApplication.class, args);`
+
+<pre>
+<code>
+@Component
+@Path("/myComponent")
+public class MyService {
+
+    @GET
+    @Path("/restAPI/{value}")
+    public String restAPI(@PathParam("value") String value) {
+        return "restAPI " + value;
+    }
+}
+
+@Component
+@Path("/menu")
+public class MenuService {
+	
+    @Autowired
+    private MealSpringService mealService;
+	
+    @GET
+    @Path("/")
+    @Produces({ "application/json" })
+    public Response index() {
+        return Response.ok().entity(mealService.findAll()).build();
+    }
+	
+    @GET
+    @Path("/html")
+    @Produces({ "application/json" })
+    public Response html() {
+        Map map = Collections.singletonMap("meals", mealService.findAll());
+        String html = "&lt;body&gt;&lt;h1&gt; " + map.get("meals") + "&lt;h1\&gt;&lt;body\&gt;";
+        return Response.ok()
+          .type(MediaType.TEXT_HTML)
+          .entity(html)
+          .build();
+    }
+ 
+    @GET
+    @Path("/{id}")
+    @Produces({ "application/json" })
+    public Response meal(@PathParam("id") int id) {
+        return Response.ok().entity(mealService.find(id)).build();
+    }
+
+</code>
+</pre>
+
+在使用 Spring 開發時，物件交由 Spring 管理，所以在使用物件前，我不們不會透過 new 的方式來建立實例 (instance)，而是用 Annotation 註冊的方式，告知 Spring 對物件做注入的動作 (inject)
+
+<pre>
+<code>
+
+@Service
+public class MealSpringService {
+	
+    @Autowired
+    MealDao mealDao;
+ 
+    public Meal find(int id) {
+        return mealDao.find(id);
+    }
+ 
+    public List<Meal> findAll() {
+        return mealDao.findAll();
+    }
+ 
+    public void create(Meal meal) {
+    	mealDao.create(meal);
+    }
+}
+</code>
+</pre>
+
+如上程式碼，**MealSpringService** 透過 **@Service** 向 Spring 註冊為 Spring service <span style="color:red">(注意，這裡指的是 Spring 的 service，並非microservice 的 service)</span>，而 **MenuService** 宣告的 MealSpringService 物件定義了 **@Autowired** ，告訴 Spring 此物件要用注入的方式取得，透過 Spring 給予實例，而不是用 new 的方式產生實例。
+
+**MealDao** 同上述用法，在提供的地方註冊 **@Service** ，使用的地方注入 **@Autowired**
