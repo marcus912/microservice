@@ -1,6 +1,8 @@
 # Microservice
 MSF4J for survey
 
+It's a document for beginner who hasn't gotten to know more about microservice.
+
 ![alt text](https://cdn-images-1.medium.com/max/1600/0*bqCEfzwZJowivElX.png)
 
 https://docs.wso2.com/display/EI611/About+this+Release
